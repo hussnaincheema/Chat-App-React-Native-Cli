@@ -4,6 +4,7 @@ import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import HomeScreen from '../Screens/HomeScreen';
 import MessageScreen from '../Screens/MessageScreen';
 import ChatScreen from '../Screens/ChatScreen';
+import AuthScreen from '../Screens/AuthScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -23,6 +24,11 @@ const StackNavigator = () => {
       <Stack.Screen
         name="Chat"
         component={ChatScreen}
+        options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name="Auth"
+        component={AuthScreen}
         options={{headerShown: false}}
       />
     </Stack.Navigator>
