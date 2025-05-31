@@ -15,7 +15,7 @@ const HomeScreen = () => {
     setTimeout(() => {
       setLoading(false);
       navigation.navigate('Auth');
-    }, 2000);
+    }, 400);
   };
   return (
     <SafeAreaView style={styles.safeArea}>
