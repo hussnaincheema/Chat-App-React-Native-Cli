@@ -5,7 +5,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import React, {useEffect, useState} from 'react';
+import React, {useContext, useEffect, useState} from 'react';
 import {CustomInput} from '../Components/CustomInput';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import Colors from '../Utils/Colors';
@@ -13,10 +13,11 @@ import {CustomButton} from '../Components/CustomButton';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {useNavigation} from '@react-navigation/native';
 import {screensEnabled} from 'react-native-screens';
+import {UserContext} from '../Context/UseContext';
+import Toast from 'react-native-toast-message';
 
 const AuthScreen = () => {
   const [showLoginView, setShowLoginView] = useState(false);
-  const [currentUserName, setCurrentUserName] = useState('');
   const [email, setEmail] = useState('');
   const [isRegistered, setIsRegistered] = useState(false);
   const [password, setPassword] = useState('');
@@ -24,10 +25,14 @@ const AuthScreen = () => {
   const [secureLoginPassword, setSecureLoginPassword] = useState(true);
   const [loading, setLoading] = useState(false);
   const [users, setUsers] = useState([]);
+  const [currentUserName, setCurrentUserName] = useState('');
+
+  const {register, login, currentUser} = useContext(UserContext);
 
   useEffect(() => {
     const loadUsers = async () => {
       const usersData = await AsyncStorage.getItem('users');
+      console.log('Users Data', usersData);
       if (usersData) {
         setUsers(JSON.parse(usersData));
       }
@@ -39,62 +44,79 @@ const AuthScreen = () => {
 
   const handleRegister = async () => {
     if (!currentUserName || !email || !password) {
-      alert('Please fill all fields');
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: 'Please fill all fields.',
+        position: 'top',
+      });
       return;
     }
     setLoading(true);
     setTimeout(async () => {
       try {
-        const newUser = {
-          name: currentUserName,
-          email,
-          password,
-        };
-        const updatedUsers = [...users, newUser];
-        console.log('Users', updatedUsers);
-        setUsers(updatedUsers);
-        await AsyncStorage.setItem('users', JSON.stringify(updatedUsers));
+        await register(currentUserName, email, password);
+        Toast.show({
+          type: 'success',
+          text1: 'Success',
+          text2: 'You have Created an Account Successfully',
+          position: 'top',
+        });
         setIsRegistered(true);
-        setPassword('');
         setCurrentUserName('');
         setEmail('');
-        alert('Registration successful! Please login.');
+        setPassword('');
       } catch (e) {
-        alert('Registration failed!');
+        Toast.show({
+          type: 'error',
+          text1: 'Error',
+          text2: 'Registration failed. Please try again.',
+          position: 'top',
+        });
       }
       setLoading(false);
-    }, 2000);
+    }, 400);
   };
 
+  // Replace handleLogin:
   const handleLogin = async () => {
+    if (!email || !password) {
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: 'Please fill all fields.',
+        position: 'top',
+      });
+      return;
+    }
     setLoading(true);
     setTimeout(async () => {
-      try {
-        const usersData = await AsyncStorage.getItem('users');
-        const usersArray = usersData ? JSON.parse(usersData) : [];
-        const foundUser = usersArray.find(
-          user =>
-            (user.email === currentUserName || user.name === currentUserName) &&
-            user.password === password,
-        );
-        if (foundUser) {
-          alert('Login successful!');
-          navigation.navigate('Chat');
-        } else {
-          alert('Invalid credentials');
-        }
-      } catch (e) {
-        alert('Login failed!');
+      const success = await login(email, password);
+      if (success) {
+        Toast.show({
+          type: 'success',
+          text1: 'Success',
+          text2: 'Login successful!',
+          position: 'top',
+        });
+        navigation.navigate('Chat');
+      } else {
+        Toast.show({
+          type: 'error',
+          text1: 'Error',
+          text2: 'Invalid Credentials',
+          position: 'top',
+        });
       }
       setLoading(false);
-    }, 2000);
+    }, 400);
   };
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
         {!isRegistered ? (
-          <View>
+          <View style={styles.mainContainer}>
             <Text style={styles.heading}>Create An Account</Text>
             <View style={styles.formContainer}>
               <CustomInput
@@ -139,18 +161,28 @@ const AuthScreen = () => {
                   disabled={loading}
                   loading={loading}
                 />
+                <Text style={styles.switchText}>
+                  Already have an account?{' '}
+                  <Text
+                    style={styles.linkText}
+                    onPress={() => {
+                      setIsRegistered(true);
+                    }}>
+                    Login
+                  </Text>
+                </Text>
               </View>
             </View>
           </View>
         ) : (
-          <View>
+          <View style={styles.mainContainer}>
             <Text style={styles.heading}>Login</Text>
             <View style={styles.formContainer}>
               <CustomInput
                 label="Email"
                 placeholder="Enter your Email"
-                value={currentUserName}
-                onChangeText={value => setCurrentUserName(value)}
+                value={email}
+                onChangeText={value => setEmail(value)}
                 autoCapitalize="none"
               />
 
@@ -183,6 +215,16 @@ const AuthScreen = () => {
                   disabled={loading}
                   loading={loading}
                 />
+                <Text style={styles.switchText}>
+                  Don’t have an account?{' '}
+                  <Text
+                    style={styles.linkText}
+                    onPress={() => {
+                      setIsRegistered(false);
+                    }}>
+                    Register
+                  </Text>
+                </Text>
               </View>
             </View>
           </View>
@@ -197,7 +239,7 @@ export default AuthScreen;
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: Colors.white,
   },
   container: {
     padding: 20,
@@ -210,13 +252,13 @@ const styles = StyleSheet.create({
   },
   button: {
     marginTop: 15,
-    backgroundColor: '#467fd0',
+    backgroundColor: Colors.primaryBlue,
     paddingVertical: 12,
     borderRadius: 8,
     alignItems: 'center',
   },
   buttonText: {
-    color: '#fff',
+    color: Colors.white,
     fontWeight: '600',
   },
   buttonContainer: {
@@ -225,5 +267,18 @@ const styles = StyleSheet.create({
   },
   formContainer: {
     marginTop: 30,
+  },
+  switchText: {
+    marginTop: 20,
+    textAlign: 'center',
+    color: Colors.mediumGray,
+  },
+
+  linkText: {
+    color: Colors.primaryBlue,
+    fontWeight: 'bold',
+  },
+  mainContainer: {
+    marginTop: 50,
   },
 });

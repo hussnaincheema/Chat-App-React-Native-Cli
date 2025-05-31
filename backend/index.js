@@ -1,19 +1,47 @@
 const express = require('express');
+const http = require('http');
+const cors = require('cors');
+const {Server} = require('socket.io');
 
 const app = express();
-const http= require('http').Server(app);
-const cors = require('cors');
+const server = http.createServer(app);
+
+const io = new Server(server, {
+  cors: {
+    origin: '*', // Allow all origins for development
+    methods: ['GET', 'POST'],
+  },
+});
 
 const PORT = 4000;
 
-app.use(express.urlencoded({extended: true}));
+let chatGroups = [];
+
 app.use(express.json());
 app.use(cors());
 
-app.get('/api', (req, res) => {
-      console.log(req, res)
-})
+io.on('connection', socket => {
+  console.log(`${socket.id} connected`);
 
-http.listen(PORT, () => {
-      console.log(`Server is Running on ${PORT}`)
-})
+  socket.on('getAllGroups', () => {
+    socket.emit('groupList', chatGroups);
+  });
+
+  socket.on('createGroup', groupName => {
+    const newGroup = {
+      id: chatGroups.length + 1,
+      name: groupName,
+      messages: [],
+    };
+    chatGroups.push(newGroup);
+    io.emit('groupList', chatGroups);
+  });
+
+  socket.on('disconnect', () => {
+    console.log(`${socket.id} disconnected`);
+  });
+});
+
+server.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
