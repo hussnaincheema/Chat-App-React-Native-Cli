@@ -15,6 +15,7 @@ import {CustomButton} from '../Components/CustomButton';
 import NewGroupModal from '../Components/NewGroupModal';
 import Toast from 'react-native-toast-message';
 import {socket} from '../Utils';
+import {useNavigation} from '@react-navigation/native';
 
 const ChatScreen = () => {
   const {
@@ -27,6 +28,8 @@ const ChatScreen = () => {
     setGroupName,
   } = useContext(UserContext);
   const [loading, setLoading] = useState(false);
+  const [logoutModalVisible, setLogoutModalVisible] = useState(false);
+  const navigation = useNavigation();
 
   useEffect(() => {
     socket.emit('getAllGroups');
@@ -60,11 +63,26 @@ const ChatScreen = () => {
     }, 400);
   };
 
+  const handleConfirmLogout = () => {
+    setLoading(true);
+    setTimeout(() => {
+      socket.disconnect();
+      setLoading(false);
+      Toast.show({
+        type: 'success',
+        text1: 'Logged out successfully',
+        position: 'top',
+      });
+      setLogoutModalVisible(false);
+      navigation.navigate('Home');
+    }, 400);
+  };
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.header}>
         <Text style={styles.headerText}>Welcome {currentUser?.name}!</Text>
-        <TouchableOpacity>
+        <TouchableOpacity onPress={() => setLogoutModalVisible(true)}>
           <MaterialCommunityIcons
             name={'logout'}
             size={24}
@@ -81,6 +99,7 @@ const ChatScreen = () => {
               <ChatComponent item={item} keyExtractor={item => item.id} />
             )}
             keyExtractor={item => item.id}
+            showsVerticalScrollIndicator={false}
           />
         ) : (
           <View style={styles.noChatContainer}>
@@ -90,7 +109,7 @@ const ChatScreen = () => {
 
         <View style={styles.buttonContainer}>
           <CustomButton
-            text="Create New Group"
+            text="Create New Chat"
             onPress={handleNewGroup}
             disabled={loading}
             loading={loading}
@@ -99,16 +118,27 @@ const ChatScreen = () => {
       </View>
 
       {/* Create New Group Modal */}
-      {modalVisible && (
-        <NewGroupModal
-          Input={true}
-          confirmButton={'Create'}
-          cancelButton={'Cancel'}
-          onConfirm={handleCreateGroup}
-          onClose={() => setModalVisible(false)}
-          loading={loading}
-        />
-      )}
+      <NewGroupModal
+        Input={true}
+        confirmButton={'Create'}
+        cancelButton={'Cancel'}
+        onConfirm={handleCreateGroup}
+        onClose={() => setModalVisible(false)}
+        loading={loading}
+        visible={modalVisible}
+      />
+
+      {/* Logout Modal */}
+      <NewGroupModal
+        Input={false}
+        text={'Are you sure you want to logout?'}
+        confirmButton={'Confirm'}
+        cancelButton={'Cancel'}
+        onConfirm={handleConfirmLogout}
+        onClose={() => setLogoutModalVisible(false)}
+        loading={loading}
+        visible={logoutModalVisible}
+      />
     </SafeAreaView>
   );
 };
@@ -145,7 +175,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   buttonContainer: {
-    marginTop: 60,
     alignItems: 'center',
   },
 });

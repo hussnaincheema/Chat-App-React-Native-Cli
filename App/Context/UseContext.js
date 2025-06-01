@@ -10,6 +10,9 @@ export const UserProvider = ({children}) => {
   const [allChatRooms, setAllChatRooms] = useState([]);
   const [modalVisible, setModalVisible] = useState(false);
   const [groupName, setGroupName] = useState('');
+  const [messages, setMessages] = useState({});
+  const [allChatMessages, setAllChatMessages] = useState([]);
+  const [currentChatMessage, setCurrentChatMessage] = useState('');
 
   // Load user on app start
   useEffect(() => {
@@ -71,6 +74,12 @@ export const UserProvider = ({children}) => {
         setModalVisible,
         groupName,
         setGroupName,
+        messages,
+        setMessages,
+        allChatMessages,
+        setAllChatMessages,
+        currentChatMessage,
+        setCurrentChatMessage,
       }}>
       {children}
     </UserContext.Provider>

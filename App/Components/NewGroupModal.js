@@ -20,6 +20,7 @@ const NewGroupModal = ({
   onConfirm,
   onClose,
   loading = false,
+  visible,
 }) => {
   const {modalVisible, setModalVisible, groupName, setGroupName} =
     useContext(UserContext);
@@ -28,9 +29,8 @@ const NewGroupModal = ({
     <Modal
       animationType="slide"
       transparent={true}
-      visible={modalVisible}
+      visible={visible}
       onRequestClose={() => {
-        Alert.alert('Modal has been closed.');
         setModalVisible(false);
       }}>
       <View style={styles.overlay}>
@@ -112,11 +112,12 @@ const styles = StyleSheet.create({
     fontSize: 18,
     marginBottom: 10,
     textAlign: 'center',
+    fontWeight: 'bold',
   },
   modalButtons: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    width: '70%',
+    width: '80%',
     alignItems: 'center',
   },
   input: {width: '100%'},
