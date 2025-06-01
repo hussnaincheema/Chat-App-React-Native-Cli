@@ -11,6 +11,7 @@ export const CustomInput = ({
   placeholder,
   onBlur,
   rightIcon,
+  customInputStyle = {},
 }) => {
   return (
     <View style={styles.container}>
@@ -18,7 +19,7 @@ export const CustomInput = ({
 
       <View style={styles.fieldContainer}>
         <TextInput
-          style={styles.input}
+          style={[styles.input, customInputStyle]}
           value={value}
           onChangeText={onChangeText}
           keyboardType={keyboardType}
